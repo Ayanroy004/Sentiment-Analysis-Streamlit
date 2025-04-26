@@ -113,6 +113,11 @@ st.markdown("""
         background: linear-gradient(135deg, #2c4d34, #8a4c2b);
         background-attachment: fixed;
     }
+    @media (max-width: 640px) {
+    .st-emotion-cache-t74pzu {
+        min-width: calc(50% - 1.5rem);
+    }
+}
     </style>
 """, unsafe_allow_html=True)
 
@@ -141,16 +146,16 @@ if st.button("🔍 Analyze"):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"""
-                <div style='padding: 1em; border-radius: 10px; background-color: #f4f4f4;'>
-                    <h4> Emotion:</h4>
+                <div style='padding: 10px; border-radius: 10px; background-color: #f4f4f4;'>
+                    <h4 style='color: #ff6347;> Emotion:</h4>
                     <h2 style='color: #ff6347;'>{emotion}</h2>
                 </div>
             """, unsafe_allow_html=True)
         with col2:
             sentiment_color = "#2ecc71" if sentiment == "Positive" else "#e74c3c" if sentiment == "Negative" else "#f1c40f"
             st.markdown(f"""
-                <div style='padding: 1em; border-radius: 10px; background-color: #f4f4f4;'>
-                    <h4> Sentiment:</h4>
+                <div style='padding: 10px; border-radius: 10px; background-color: #f4f4f4;'>
+                    <h4 style='color: #ff6347;> Sentiment:</h4>
                     <h2 style='color: {sentiment_color};'>{sentiment}</h2>
                 </div>
             """, unsafe_allow_html=True)
