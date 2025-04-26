@@ -182,7 +182,7 @@ if st.session_state.last_user_input != "":
         else:
             if st.button("Submit Feedback (Confirmed)"):
 
-                save_feedback(st.session_state.last_user_input, st.session_state.last_predicted_emotion, st.session_state.last_predicted_emotion)
+                # save_feedback(st.session_state.last_user_input, st.session_state.last_predicted_emotion, st.session_state.last_predicted_emotion)
                 st.session_state.feedback_submitted = True
                 st.success("✅ Awesome! Thanks for confirming the prediction.")
     else:
