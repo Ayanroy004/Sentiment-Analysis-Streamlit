@@ -172,7 +172,7 @@ if st.session_state.last_user_input != "":
         if feedback == "No":
             correct_emotion = st.selectbox(
                 "Select the correct emotion:",
-                ["Love", "Fear", "Joy", "Surprise", "Sad", "Anger"],
+                ["Love", "Fear", "Joy", "Surprise", "Sad", "Anger", "Neutral"],
                 key="correction_select"
             )
             if st.button("Submit Feedback (Correction)"):
