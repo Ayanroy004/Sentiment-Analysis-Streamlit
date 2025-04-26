@@ -8,7 +8,21 @@ from nltk.corpus import wordnet
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from tensorflow.keras.models import load_model
 import nltk
-import os
+from pymongo import MongoClient
+
+# ==================== MongoDB Setup ====================
+
+# Get MongoDB URI from Streamlit secrets
+MONGO_URI = st.secrets["mongo"]["uri"]
+
+# Connect to MongoDB Atlas
+client = MongoClient(MONGO_URI)
+
+# Select the database and collection
+db = client['admin1234']  # Replace with your actual database name
+collection = db['user_feedback']  # Replace with your actual collection name
+
+# ==================== Model and Preprocessing Setup ====================
 
 nltk.download('wordnet')
 nltk.download('omw-1.4')
@@ -78,20 +92,19 @@ def predict_emotion(text):
     predicted_sentiment = sentiment_mapping.get(predicted_emotion.lower(), "Neutral")
     return predicted_emotion.capitalize(), predicted_sentiment, prediction
 
+# ==================== MongoDB Storage for Feedback ====================
+
 def save_feedback(text, predicted, actual):
     feedback_data = {
-        "Text": [text],
-        "Predicted": [predicted],
-        "Actual": [actual]
+        "Text": text,
+        "Predicted": predicted,
+        "Actual": actual
     }
 
-    df_feedback = pd.DataFrame(feedback_data)
+    # Insert feedback into MongoDB collection
+    collection.insert_one(feedback_data)
 
-    # Append to file if it exists
-    if os.path.exists("user_feedback.csv"):
-        df_feedback.to_csv("user_feedback.csv", mode="a", header=False, index=False)
-    else:
-        df_feedback.to_csv("user_feedback.csv", index=False)
+# ==================== Streamlit App ====================
 
 # Custom CSS
 st.markdown("""
@@ -107,13 +120,22 @@ st.markdown("""
 st.markdown("<h1 style='text-align: center;'> Emotion & Sentiment Analyzer</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>From the <b>frustrated</b> people having no life </p>", unsafe_allow_html=True)
 
-user_input = st.text_area(" Enter a sentence to analyze:", height=150)
+user_input = st.text_area("Enter a sentence to analyze:", height=150)
+
+if "last_user_input" not in st.session_state:
+    st.session_state.last_user_input = ""
+if "feedback_submitted" not in st.session_state:
+    st.session_state.feedback_submitted = False
 
 if st.button("🔍 Analyze"):
     if user_input.strip() == "":
         st.warning("Hey! Put some nonsense text")
     else:
         emotion, sentiment, probs = predict_emotion(user_input)
+
+        st.session_state.last_user_input = user_input
+        st.session_state.last_predicted_emotion = emotion
+        st.session_state.feedback_submitted = False
 
         # Show results
         col1, col2 = st.columns(2)
@@ -134,35 +156,34 @@ if st.button("🔍 Analyze"):
             """, unsafe_allow_html=True)
 
         # Sidebar: Emotion Probabilities
-        st.sidebar.subheader(" Emotion Probabilities")
+        st.sidebar.subheader("Emotion Probabilities")
         for emo, prob in zip(label_encoder.classes_, probs):
             st.sidebar.write(f"**{emo.capitalize()}**: {prob*100:.2f}%")
             st.sidebar.progress(float(prob))
 
-        # Feedback section
-                # Feedback section with session state
-        st.markdown("---")
-        st.subheader("🔁 Was the prediction correct?")
+# ⭐ Feedback section always shows after prediction ⭐
+if st.session_state.last_user_input != "":
+    st.markdown("---")
+    st.subheader("🔁 Was the prediction correct?")
 
-        if "feedback_submitted" not in st.session_state:
-            st.session_state.feedback_submitted = False
+    if not st.session_state.feedback_submitted:
+        feedback = st.radio("Select one:", ["Yes", "No"], horizontal=True, key="feedback_radio")
 
-        if not st.session_state.feedback_submitted:
-            feedback = st.radio("Select one:", ["Yes", "No"], horizontal=True, key="feedback_radio")
+        if feedback == "No":
+            correct_emotion = st.selectbox(
+                "Select the correct emotion:",
+                ["Love", "Fear", "Joy", "Surprise", "Sad", "Anger"],
+                key="correction_select"
+            )
+            if st.button("Submit Feedback (Correction)"):
+                save_feedback(st.session_state.last_user_input, st.session_state.last_predicted_emotion, correct_emotion)
+                st.session_state.feedback_submitted = True
+                st.success("✅ Thanks for the feedback! We'll use this to improve the model.")
+        else:
+            if st.button("Submit Feedback (Confirmed)"):
 
-            if feedback == "No":
-                correct_emotion = st.selectbox(
-                    "Select the correct emotion:",
-                    ["Love", "Fear", "Joy", "Surprise", "Sad", "Anger"],
-                    key="correction_select"
-                )
-                if st.button("Submit Feedback"):
-                    save_feedback(user_input, emotion, correct_emotion)
-                    st.session_state.feedback_submitted = True
-                    st.success("✅ Thanks for the feedback! We'll use this to improve the model.")
-            else:
+                save_feedback(st.session_state.last_user_input, st.session_state.last_predicted_emotion, st.session_state.last_predicted_emotion)
                 st.session_state.feedback_submitted = True
                 st.success("✅ Awesome! Thanks for confirming the prediction.")
-        else:
-            st.info("✅ Feedback already submitted for this prediction.")
-
+    else:
+        st.info("✅ Feedback already submitted for this prediction.")
