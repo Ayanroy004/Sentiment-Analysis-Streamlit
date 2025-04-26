@@ -140,13 +140,29 @@ if st.button("🔍 Analyze"):
             st.sidebar.progress(float(prob))
 
         # Feedback section
+                # Feedback section with session state
         st.markdown("---")
         st.subheader("🔁 Was the prediction correct?")
-        feedback = st.radio("Select one:", ["Yes", "No"], horizontal=True)
 
-        if feedback == "No":
-            correct_emotion = st.selectbox("Select the correct emotion:", 
-                                           ["Love", "Fear", "Joy", "Surprise", "Sad", "Anger"])
-            if st.button("Submit Feedback"):
-                save_feedback(user_input, emotion, correct_emotion)
-                st.success("✅ Thanks for the feedback! We'll use this to improve the model.")
+        if "feedback_submitted" not in st.session_state:
+            st.session_state.feedback_submitted = False
+
+        if not st.session_state.feedback_submitted:
+            feedback = st.radio("Select one:", ["Yes", "No"], horizontal=True, key="feedback_radio")
+
+            if feedback == "No":
+                correct_emotion = st.selectbox(
+                    "Select the correct emotion:",
+                    ["Love", "Fear", "Joy", "Surprise", "Sad", "Anger"],
+                    key="correction_select"
+                )
+                if st.button("Submit Feedback"):
+                    save_feedback(user_input, emotion, correct_emotion)
+                    st.session_state.feedback_submitted = True
+                    st.success("✅ Thanks for the feedback! We'll use this to improve the model.")
+            else:
+                st.session_state.feedback_submitted = True
+                st.success("✅ Awesome! Thanks for confirming the prediction.")
+        else:
+            st.info("✅ Feedback already submitted for this prediction.")
+
