@@ -115,11 +115,14 @@ st.markdown("""
     }
     @media (max-width: 640px) {
     .outputs{
-         display: flex;align-items: center;   
+        display: flex;align-items: center; 
+        margin-bottom: 10px;   
     }
     .outputs h4{
-         padding:0;   
+        padding:0;
+          
     }
+            
 }
     </style>
 """, unsafe_allow_html=True)
