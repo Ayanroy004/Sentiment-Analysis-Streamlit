@@ -28,7 +28,7 @@ nltk.download('wordnet')
 nltk.download('omw-1.4')
 
 # Load artifacts
-model = load_model("model_components/emotion_nn_model.h5")
+model = load_model("model_components/finalemotion_nn_model_fast.h5")
 with open("model_components/finaltfidf_vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 with open("model_components/finallabel_encoder.pkl", "rb") as f:
